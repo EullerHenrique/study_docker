@@ -1,0 +1,28 @@
+version: '3.3' 
+
+services:
+  db: #Nome do container de MySql
+    image: mysql:5.7 #From mysql:5.7
+    volumes: 
+      - db_data:/var/lib/mysql #Caminho do volume de dados do container
+    restart: always #O container será reiniciado sempre que o servidor for reiniciado
+    env_file: 
+      - ./config/db.env #Arquivo de configuração do container
+    networks:
+      - backend #Nome da rede do container
+  wordpress: #Nome do container de Wordpress
+    depends_on: #Dependências do container
+      - db
+    image: wordpress:latest #From wordpress:latest
+    ports: #Portas do container
+        - "8000:80"
+    restart: always #O container será reiniciado sempre que o servidor for reiniciado
+    env_file: 
+      - ./config/wp.env #Arquivo de configuração do container
+    networks:
+      - backend #Nome da rede do container
+volumes:
+  db_data: {} 
+networks:
+  backend: 
+    driver: bridge 

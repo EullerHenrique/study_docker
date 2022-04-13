@@ -1,0 +1,14 @@
+#Define o diretorio base 
+FROM node
+#Define o diretorio da imagem 
+WORKDIR /src
+#Copia os arquivos package.json e package-lock.json para o diretório /app
+COPY package*.json . 
+#Executa o comando npm install
+RUN npm install
+#Copia o app.js do diretorio atual para o diretorio /app
+COPY . . 
+#Exibe a porta 3000 
+EXPOSE 3000 
+#Executa o comando node app.js 
+CMD ["node", "app.js"]

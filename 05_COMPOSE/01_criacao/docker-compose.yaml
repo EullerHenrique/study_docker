@@ -1,0 +1,27 @@
+version: '3.3' 
+
+services:
+  db: #Nome do container de MySql
+    image: mysql:5.7 #From mysql:5.7
+    volumes: 
+      - db_data:/var/lib/mysql #Caminho do volume de dados do container
+    restart: always #O container será reiniciado sempre que o servidor for reiniciado
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345 #Senha de root do container
+      MYSQL_DATABASE:  wordpress #Nome do banco de dados
+      MYSQL_USER: euller #Nome do usuário do banco de dados
+      MYSQL_PASSWORD: 12345 #Senha do usuário do banco de dados
+  wordpress: #Nome do container de Wordpress
+    depends_on: #Dependências do container
+      - db
+    image: wordpress:latest #From wordpress:latest
+    ports: #Portas do container
+        - "8000:80"
+    restart: always #O container será reiniciado sempre que o servidor for reiniciado
+    environment: 
+        WORDPRESS_DB_HOST: db:3306 #Host do banco de dados
+        WORDPRESS_DB_USER: euller #Nome do usuário do banco de dados
+        WORDPRESS_DB_PASSWORD: 12345 #Senha do usuário do banco de dados
+        WORDPRESS_DB_NAME: wordpress #Nome do banco de dados
+volumes:
+  db_data: {}

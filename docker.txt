@@ -1,0 +1,989 @@
+Comandos Docker
+
+docker run docker/whalesay cowsay Hello_World: Roda um container e o container roda uma imagem e a imagem executa o comando cowsay Hello_World
+docker run ubuntu: Roda um container e o container roda uma imagem
+docker run -it ubuntu: Roda um container e o container roda uma imagem repetidamente (ou seja, com iteração, -it)
+docker ps/docker container ls: Exibe quais containers estão sendo executados no momento
+docker ps -a/docker container ls -a: Exibe quais containers foram executados 
+docker run -d nginx: Roda um container em background (Com isso, a execução não ocupa o terminal)
+docker stop <id ou name>: Interrompe a execução de um determinado container
+docker run -d -p 80:80 nginx (Expoe a porta de um container. Lado esquerdo: Porta do computador, Lado direito: Porta do container)
+docker start <id>: Inicia a execução de um container
+docker run <inicial do cointainer id>
+docker run -d -p 80:80 --name nginx_app nginx: Dá um nome a um container
+docker logs <id ou nome>: Apresenta os logs de um container
+docker logs -f: Apresenta os logs de um container continuinamente
+docker rm <id ou nome>: Remove um container
+docker rm -f <id ou nome>: Para e remove um container
+
+Criação de uma imagem
+
+dockerfile
+
+FROM: Imagem base
+WORKDIR: Diretório da aplicação
+EXPOSE: Porta da aplicação
+COPY: Quais arquivos precisam ser copiados 
+
+
+Ex: 
+
+#Define o diretorio base 
+FROM node
+#Define o diretorio da imagem 
+WORKDIR /app 
+#Copia os arquivos package.json e package-lock.json para o diretório /app
+COPY package*.json . 
+#Executa o comando npm install
+RUN npm install
+#Copia o app.js do diretorio atual para o diretorio /app
+COPY . . 
+#Exibe a porta 3000 
+EXPOSE 3000 
+#Executa o comando node app.js 
+CMD ["node", "app.js"]
+
+docker build <diretorio>: Gera uma imagem
+docker images/docker image ls: Lista as imagens instaladas
+docker run -d -p 3000:3000 --name meu_app 605
+
+Comandos Docker
+
+docker pull <image>: Instala uma imagem no computador (Ao criar outros containers com a mesma imagem,
+a imagem não precisará ser baixada novamente (cache) )
+
+docker run --help: Exibe informações do comando run
+docker tag 605 my_imagem: Dá um nome à uma imagem
+docker tag 605 my_name:my_tag  Dá um nome e uma tag à uma imagem
+docker build -t meu_node .: Dá um nome à uma imagem ao realizar o build dela
+docker build -t meu_node:minha_tag .: Dá um nome e uma tag à uma imagem  
+docker stop my_imagem
+docker start -i my_imagem: Roda um container e o container roda uma imagem repetidamente (ou seja, com iteração, -it)
+dokcer rmi <imagem>: Remove uma imagem
+docker rmi -f <imagem>: Remove uma imagem que está sendo executada em um container
+docker system prune: Remove imagens e containers da memória não utilizados ?
+docker run -d -p 3000:3000 --name node_diferente --rm meu_node_diferente :  Remove o container após o stop ser realizado
+docker cp node_diferente:/app/app.js ./copy/: Realiza uma copia
+docker top <container>: Exibe os dados de execução de um container
+docker inspect <container>: Exibe os dados de configuração de um container
+docker stats: Verifica os procesos que estão sendo executados em um container. Dessa maneira, temos acesso ao andamento do processamento e memória gasta pelo container
+docker login: Realiza o login no docker hub
+docker logout: Realiza o logout do docker hub
+docker build -t eullerhbo/node_test .
+docker push eullerhbo/node_test
+docker rmi eullerhbo/node_test
+docker pull eullerhbo/node_test
+docker build -t eullerhbo/node_test:nova_versao .
+docker push eullerhbo/node_test:nova_versao
+docker rmi eullerhbo/node_test:nova_versao
+docker pull eullerhbo/node_test:nova_versao
+docker run -d -p 3000:3000 --name teste --rm eullerhbo/node_test:nova_versao  
+
+Criação de volumes
+
+
+docker build -t phpmessages . 
+docker run -d -p 80:80 --name phpmessages_container phpmessages
+
+// Os dados permanecem 
+docker stop phpmessages_container
+docker start phpmessages_container
+
+//Os dados somem
+docker rm phpmessages_container
+docker run -d -p 80:80 --name phpmessages_container --rm phpmessages
+
+//Volume anônimo: Nome do volume é aleátorio
+docker run -d -p 80:80 --name phpmessages_container --rm -v /data phpmessages
+docker volume ls
+docker inspect phpmessages_container
+
+//Volume nomeado: dir tem que ser igual o workdir
+docker run -d -p 80:80 --name phpmessages_container --rm -v phpvolume:/var/www/html/mensagens phpmessages
+docker volume ls
+docker inspect phpmessages_container
+docker stop 
+docker run -d -p 80:80 --name phpmessages_container --rm -v phpvolume:/var/www/html/mensagens phpmessages
+
+//Bind Mount
+
+//Também é um volume, porém ele fica em um diretório que nós especificamos(Localizado no computador)
+docker run -d -p 80:80 --name phpmessages_container --rm -v D:\Documents\Study\UFU\CURSOS\DOCKER\udemy\PHP\mensagens:/var/www/html/mensagens phpmessages
+
+//Não serve apenas para volumes, podemos utilizar esta técnica para atualização em tempo real do projeto, sem ter que refazer o build a cada atualização
+docker run -d -p 80:80 --name phpmessages_container --rm -v D:\Documents\Study\UFU\CURSOS\DOCKER\udemy\PHP\:/var/www/html/ phpmessages
+
+//Cria volume
+docker volume create volumeteste
+
+//Checar volume
+docker volume inspect <nome>
+
+//Remover o volume
+docker volume rm volumeteste
+
+//Remove todos os volumes não utilizados
+docker volume prune
+
+//Volume apenas de leitura
+ docker run -d -p 80:80 --name phpmessages_containe --rm -v volumeleitura:/var/www/html:ro phpmessages
+
+//Networks
+
+O que são Networks no Docker?
+● Uma forma de gerenciar a conexão do Docker com outras plataformas 
+ou até mesmo entre containers;
+● As redes ou networks são criadas separadas do containers, como os 
+volumes;
+● Além disso existem alguns drivers de rede, que veremos em seguida;
+● Uma rede deixa muito simples a comunicação entre containers;
+
+Tipos de rede (drivers)
+● Bridge: o mais comum e default do Docker, utilizado quando containers 
+precisam se conectar (na maioria das vezes optamos por este driver);
+● host: permite a conexão entre um container a máquina que está 
+hosteando o Docker;
+● macvlan: permite a conexão a um container por um MAC address;
+● none: remove todas conexões de rede de um container;
+● plugins: permite extensões de terceiros para criar outras redes
+
+
+Tipos de conexão
+● Os containers costumam ter três principais tipos de comunicação:
+● Externa: conexão com uma API de um servidor remoto;
+● Com o host: comunicação com a máquina que está executando o Docker;
+● Entre containers: comunicação que utiliza o driver bridge e permite a 
+comunicação entre dois ou mais containers
+
+//Listar redes
+docker network ls (Algumas redes já estão criadas, estas fazem parte da configuração inicial do docker)
+
+//Criar rede
+docker network create rede_teste (Tipo bridge)
+docker network create -d macvlan meu_macvlan  (Tipo macvlan)
+
+//Remover rede
+docker network rm rede_teste
+
+//Remover rede em massa (Todas as redes que não estão sendo utilizadas)
+docker network prune
+
+//Conexão Externa
+FROM python:3
+RUN apt-get update && apt-get install -y python3-pip
+WORKDIR /app
+RUN pip install flask 
+RUN pip install requests
+COPY . .
+EXPOSE 5000
+CMD ["python", "./app.py"]
+
+docker build -t flaskexterna .
+docker run -d -p 5000:5000 --name flaskexternocontainer --rm flaskexterna
+
+//Conexão com host
+FROM python:3
+RUN apt-get update && apt-get install -y python3-pip
+WORKDIR /app
+RUN pip install Flask requests flask_mysqldb
+COPY . .
+EXPOSE 5000
+CMD ["python", "./app.py"]
+
+docker build -t flaskhost .
+docker run -d -p 5000:5000 --name flaskhostcontainer --rm flaskhost
+
+
+//Conexão entre containers'
+
+FROM mysql:5.7
+COPY schema.sql /docker-entrypoint-initdb.d/
+EXPOSE 3306 
+VOLUME [ "/backup/" ]
+
+docker network create flasknetwork
+
+docker build -t mysqlapinetwork ./mysql
+docker run -d -p 3306:3306 --name mysql_api_container --rm --network flasknetwork -e MYSQL_ALLOW_EMPTY_PASSWORD=True mysqlapinetwork
+
+
+FROM python:3
+RUN apt-get update && apt-get install -y python3-pip
+WORKDIR /app
+RUN pip install Flask requests flask-mysqldb
+COPY . .
+EXPOSE 5000
+CMD ["python", "./app.py"]
+
+docker network create flasknetwork
+
+docker build -t flaskapinetwork ./flask
+docker run -d -p 5000:5000 --name flask_api_container --rm --network flasknetwork flaskapinetwork
+
+//Conectando um container a uma rede
+
+docker run -d -p 5000:5000 --name flask_api_container --rm  flaskapinetwork
+docker network connect flasknetwork 95d
+docker inspect 95d
+
+
+//Desconectando um container de uma rede
+docker network disconnect flasknetwork 95d
+docker inspect 95d
+
+//Inspecioanando redes
+docker network inspect flasknetwork
+
+YAML
+
+# Instruções para o progarama
+nome: "Euller"
+idade: 18
+
+# Este objeto descreve o nosso projeto
+objeto: 
+  versao: 2
+  arquivo: "test.txt"
+
+versao: 2
+versao_completa: 3.14
+
+string_sem_aspas: Ola
+texto: "Olaaa"
+
+nulo: ~
+nulo_2: null
+
+verdadeiro: True
+verdadeiro_2: On
+
+falso: False
+falso_dois: Off
+
+lista: [1, 2, 3, 4, 5]
+
+lista_dois: 
+  - "teste"
+  - 10
+  - outro_Teste
+  - True
+
+obj: {a: 1, b: 2, c: 3, d: {a: 2}}
+
+obj_2: 
+  a: 1
+  b: 2
+  c: 3
+  d: 
+    e: 4
+
+//Docker compose
+
+O Docker Compose é uma ferramenta para rodar múltiplos containers;
+● Teremos apenas um arquivo de configuração, que orquestra totalmente 
+esta situação;
+● É uma forma de rodar múltiplos builds e runs com um comando;
+● Em projetos maiores é essencial o uso do Compose;
+
+Primeiramente vamos criar um arquivo chamado docker-compose.yml na 
+raiz do projeto;
+● Este arquivo vai coordenar os containers e imagens, e possui algumas 
+chaves muito utilizadas;
+● version: versão do Compose;
+● services: Containers/serviços que vão rodar nessa aplicação;
+● volumes: Possível adição de volumes;
+
+docker-compose up
+
+//Compose em background
+docker-compose up -d
+
+//Parando o compose
+docker-compose down 
+
+//Váriaveis de ambiente
+Essa técnica é útil quando o dado a ser inserido é sensível/não pode ser compartilhado, como uma senha
+
+//Redes no compose
+
+O Compose cria uma rede básica Bridge entre os containers da 
+aplicação;
+● Porém podemos isolar as redes com a chave networks;
+● Desta maneira podemos conectar apenas os containers que optarmos;
+● E podemos definir drivers diferentes também;
+
+
+//Verificando o que tem no compose
+docker-compose ps --> Receberemos um resumo dos serviços que sobem ao rodar o compose
+
+
+Docker Swarm
+
+O que é orquestração de containers?
+● Orquestração é o ato de conseguir gerenciar e escalar os containers da 
+nossa aplicação;
+● Temos um serviço que rege sobre outros serviços, verificando se os 
+mesmos estão funcionando como deveriam;
+● Desta forma conseguimos garantir uma aplicação saudável e também que 
+esteja sempre disponível;
+● Alguns serviços: Docker Swarm, Kubernetes e Apache Mesos;
+
+O que é Docker Swarm?
+● Uma ferramenta do Docker para orquestrar containers;
+● Podendo escalar horizontalmente nossos projetos de maneira simples;
+● O famoso cluster!
+● A facilidade do Swarm para outros orquestradores é que todos os 
+comandos são muito semelhantes ao do Docker;
+● Toda instalação do Docker já vem com Swarm, porém desabilitado;
+
+Conceitos fundamentais
+● Nodes: é uma instância (máquina) que participa do Swarm;
+● Manager Node: Node que gerencia os demais Nodes;
+● Worker Node: Nodes que trabalham em função do Manager;
+● Service: Um conjunto de Tasks que o Manager Node manda o Work Node 
+executar;
+● Task: comandos que são executados nos Nodes
+
+Maneira de executar o Swarm
+● Para exemplificar corretamente o Swarm vamos precisar de Nodes, ou 
+seja, mais máquinas;
+● Então temos duas soluções:
+● AWS, criar a conta e rodar alguns servidores (precisa de cartão de crédito, 
+mas é gratuito);
+● Docker Labs, gratuito também, roda no navegador, porém expira a cada 4 
+horas;
+
+Iniciando o Swarm
+● Podemos iniciar o Swarm com o comando: docker swarm init;
+● Em alguns casos precisamos declarar o IP do servidor com a flag: 
+--advertise-addr
+● Isso fará com que a instância/máquina vire um Node;
+● E também transforma o Node em um Manager
+
+Listando Nodes ativos
+● Podemos verificar quais Nodes estão ativos com: docker node ls
+● Desta forma os serviços serão exibidos no terminal;
+● Podemos assim monitorar o que o Swarm está orquestrando;
+● Este comando será de grande utilidade a medida que formos adicionando 
+serviços no Swarm
+
+Adicionando novos Nodes
+● Podemos adicionar um novo serviço com o comando: docker swarm join 
+--token <TOKEN> <IP>:<PORTA>
+● Desta forma duas máquinas estarão conectadas;
+● Esta nova máquina entra na hierarquia como Worker;
+● Todas as ações (Tasks) utilizadas na Manager, serão replicadas em 
+Nodes que foram adicionados com join;
+
+NODE 1
+
+docker swarm leave -f
+docker swarm init --advertise-addr 192.168.0.28
+
+NODE 2
+
+docker swarm join --token SWMTKN-1-5hhtnixu5thiyxe5zfovfb3vd440ep0ztf3omd74owwi648ntg-cb0k9cxdtv95aathu6bwxkrhg 192.168.0.28:2377
+
+NODE 3
+
+docker swarm join --token SWMTKN-1-5hhtnixu5thiyxe5zfovfb3vd440ep0ztf3omd74owwi648ntg-cb0k9cxdtv95aathu6bwxkrhg 192.168.0.28:2377
+
+docker node ls
+
+Subindo um novo serviço
+● Podemos iniciar um serviço com o comando: docker service create 
+--name <nome> <imagem>
+● Desta forma teremos um container novo sendo adicionado ao nosso 
+Manager;
+● E este serviço estará sendo gerenciado pelo Swarm;
+● Podemos testar com o nginx, liberando a porta 80 o container já pode ser 
+acessado
+
+NODE 1
+
+docker service create --name nginxswarm -p 80:80 nginx
+docker ps
+
+Listando serviços
+● Podemos listar os serviços que estão rodando com: docker service ls
+● Desta maneira todos os serviços que iniciamos serão exibidos;
+● Algumas informações importantes sobre eles estão na tabela: nome, 
+replicas, imagem, porta;
+
+
+NODE 1
+
+docker service ls
+
+Removendo serviços
+● Podemos remover um serviço com: docker service rm <nome>
+● Desta maneira o serviço para de rodar;
+● Isso pode significar: parar um container que está rodando e outras 
+consequências devido a parada do mesmo;
+● Checamos a remoção com: docker service ls
+
+NODE 1
+
+docker service rm nginxswarm
+
+Aumentando o número de réplicas
+● Podemos criar um serviço com um número maior de réplicas: docker 
+service create --name <NOME> --replicas <NUMERO> <IMAGEM>
+● Desta maneira uma task será emitida, replicando este serviço nos 
+Workers;
+● Agora iniciamos de fato a orquestração;
+● Podemos checar o status com: docker service ls
+
+NODE 1
+
+docker service create --name nginxreplicas --replicas 3 -p 80:80 nginx
+
+docker ps
+
+NODE 2
+
+docker ps
+
+NODE 3
+
+docker ps
+
+Verificando a orquestração
+● Vamos remover um container de um Node Worker;
+● Isso fará com que o Swarm reinicie este container novamente;
+● Pois o serviço ainda está rodando no Manager, e isto é uma de suas 
+atribuições: garantir que os serviços estejam sempre disponíveis;
+● Obs: precisamos utilizar o force (-f);
+
+NODE 2
+
+docker container rm 496 -f
+
+docker ps
+
+docker ps
+
+Checando token do Swarm
+● As vezes vamos precisar checar o token do Swarm, para dar join em 
+alguma outra instância futuramente;
+● Então temos o comando: docker swarm join-token worker
+● Desta forma recebemos o token pelo terminal
+
+NODE 1
+
+docker swarm join-token worker
+
+Checando o Swarm
+● Podemos verificar detalhes do Swarm que o Docker está utilizando;
+● Utilizamos o comando: docker info;
+● Desta forma recebemos informações como: ID do Node, número de 
+nodes, número de managers e muito mais!
+
+docker info
+
+Removendo instância do Swarm
+● Podemos parar de executar o Swarm em uma determinada instância 
+também;
+● Vamos utilizar o comando: docker swarm leave
+● A partir deste momento, a instância não é contada mais como um Node 
+para o Swarm;
+
+Node 2 ou 3
+
+docker swarm leave
+
+Removendo um Node
+● Podemos também remover um Node do nosso ecossistema do Swarm;
+● Vamos utilizar o comando: docker node rm <ID>
+● Desta forma a instância não será considerada mais um Node, saindo 
+do Swarm;
+● O container continuará rodando na instância;
+● Precisamos utilizar o -f
+
+NODE 1
+
+RM NODE 2
+
+docker node rm 61h
+
+docker swarm join-token worker
+
+NODE 2
+
+docker swarm join --token SWMTKN-1-5m52o4gdmsxt3vy5p2xmy7a1irawuc9obbsu1fnmxnsujbfphe-8cp46q2w0k4ukayl6shpgzjza 192.168.0.17:2377
+
+Inspecionando serviços
+● Podemos ver em mais detalhes o que um serviço possui;
+● O comando é: docker service inspect <ID>
+● Vamos receber informações como: nome, data de criação, portas e etc;
+
+NODE 1
+
+docker service espect ekk
+
+Verificar containers ativados pelo service
+● Podemos ver quais containers um serviço já rodou:
+● O comando é: docker service ps <ID>
+● Receberemos uma lista de containers que estão rodando e também dos 
+que já receberam baixa;
+● Este comando é semelhante ao docker ps -a; 
+
+docker service ps ekk
+
+Rodando Compose com Swarm
+● Para rodar Compose com Swarm vamos utilizar os comandos de Stack;
+● O comando é: docker stack deploy -c <ARQUIVO.YAML> <NOME>
+● Teremos então o arquivo compose sendo executado;
+● Porém agora estamos em modo swarm e podemos utilizar os Nodes como 
+réplicas
+
+NODE 1 
+
+vim docker-compose.yaml
+
+CTRL SHIFT V
+
+version: '3.3'
+services:
+         web:
+              image: nginx
+              ports:
+                        - 80:80
+
+
+ESC:x!
+
+docker stack deploy -c docker-compose.yaml nginx_swarm
+
+Aumentando réplicas do Stack
+● Podemos criar novas réplicas nos Worker Nodes;
+● Vamos utilizar o comando: docker service scale <NOME>=<REPLICAS>
+● Desta forma as outras máquinas receberão as Tasks a serem executadas;
+
+NODE 1
+
+docker service scale nginx_swarm_web=3
+
+Fazer serviço não receber mais Tasks
+● Podemos fazer com que um serviço não receba mais ‘ordens’ do 
+Manager;
+● Para isso vamos utilizar o comando: docker node update --availability 
+drain <ID>
+● O status de drain, é o que não recebe tasks;
+● Podemos voltar para active, e ele volta ao normal
+
+docker node ls
+
+NODE 1
+
+docker node update --availability drain w13dc7r3qff65xasyk1xx4i3w (NODE 2)
+
+docker node ls
+
+docker node ps
+
+Atualizar parâmetro
+● Podemos atualizar as configurações dos nossos nodes;
+● Vamos utilizar o comando: docker service update --image <IMAGEM> 
+<SERVICO>
+● Desta forma apenas os nodes que estão com o status active receberão 
+atualizações
+
+NODE 1
+
+docker service ls
+docker service update --image nginx:1.18.0 11o
+
+docker node update --availability active p3dwiepeicla1v05tn7iv2uhe
+docker service update --image nginx:latest 11o
+
+Criando rede para Swarm
+● A conexão entre instâncias usa um driver diferente, o overlay(Conexão entre máquinas (nodes));
+Objetivo: Isolar a rede de determinados nodes, ou seja, a iteração de determinados nodes irá acontecer somente em uma determianda rede
+● Podemos criar primeiramente a rede com docker network create;
+● E depois ao criar um service adicionar a flag --network <REDE> para 
+inserir as instâncias na nossa nova rede
+
+NODE 1
+
+docker service ls
+docker service rm 11o
+docker network create --driver overlay swarm
+docker network ls
+docker service create --name nginxreplicas --replicas 3 -p 80:80 --network swarm nginx
+docker container ls
+docker container inspect 3ec
+
+Conectar serviço a uma rede
+● Podemos também conectar serviços que já estão em execução a uma 
+rede;
+● Vamos utilizar o comando de update: docker service update --network 
+<REDE> <NOME>
+● Depois checamos o resultado com inspect
+
+docker service ls
+docker service rm ggs
+docker service create --name nginxreplicas --replicas 3 -p 80:80 nginx
+docker container ls
+docker container inspect 6c5
+docker service ls
+docker service update --network-add swarm b01
+docker container ispect 6c5
+
+O que é Kubernetes?
+● Uma ferramenta de orquestração de containers;
+● Permite a criação de múltiplos containers em diferentes máquinas 
+(nodes);
+● Escalando projetos, formando um cluster;
+● Gerencia serviços, garantindo que as aplicações sejam executadas 
+sempre da mesma forma;
+● Criada pelo Google;
+
+Conceitos fundamentais
+● Control Plane: Onde é gerenciado o controle dos processos dos Nodes (Manager Node);
+● Nodes: Máquinas que são gerenciadas pelo Control Plane (Worker Node);
+● Deployment: A execução de uma imagem/projeto em um Pod (Service);
+● Pod: um ou mais containers que estão em um Node (Task);
+● Services: Serviços que expõe os Pods ao mundo externo (Network);
+● kubectl: Cliente de linha de comando para o Kubernetes
+
+Dependências necessárias
+● O Kubernetes pode ser executado de uma maneira simples em nossa 
+máquina;
+● Vamos precisar do client, kubectl, que é a maneira de executar o 
+Kubernetes;
+● E também o Minikube, uma espécie de simulador de Kubernetes, para 
+não precisarmos de vários computadores/servidores;
+
+Kubernetes no Windows
+● Primeiramente vamos instalar o gerenciador de pacotes Chocolatey;
+● Depois seguiremos a documentação de instalação do client de 
+Kubernetes;
+● Devemos também instalar o Virtualbox (não é necessário se você tem o 
+Hyper-V ou o Docker instalado);
+● E por fim o Minikube;
+● Na próxima aula vamos inicializar o Minikube!
+
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+choco install kubernetes-cli
+
+kubectl version --client
+
+choco install minikube
+
+minikube version
+
+Iniciando o Minikube
+● Para inicializar o Minikube vamos utilizar o comando: minikube start 
+--driver=<DRIVER>
+● Onde o driver vai depender de como foi sua instalação das dependências, 
+e por qualquer um deles atingiremos os mesmos resultados!
+● Você pode tentar: virtualbox, hyperv e docker
+● Podemos testar o Minikube com: minikube status
+
+minikube start --driver=docker
+minikube status
+
+Parando o Minikube
+● Obs: sempre que o computador for reiniciado, deveremos iniciar o 
+Minikube;
+● E podemos pará-lo também com o comando: minikube stop
+● Para iniciar novamente, digite: minikube start --driver=<DRIVER>
+
+minikube stop
+minikube status
+
+Acessando a dashboard do Kubernetes
+● O Minikube nos disponibiliza uma dashboard;
+● Nela podemos ver todo o detalhamento de nosso projeto: serviços, pods 
+e etc;
+● Vamos acessar com o comando: minikube dashboard
+● Ou para apenas obter a URL: minibuke dashboard --ur
+
+minibuke dashboard
+
+Deployment teoria
+● O Deployment é uma parte fundamental do Kubernetes;
+● Com ele criamos nosso serviço que vai rodar nos Pods;
+● Definimos uma imagem e um nome, para posteriormente ser replicado 
+entre os servidores;
+● A partir da criação do deployment teremos containers rodando;
+● Vamos precisar de uma imagem no Hub do Docker, para gerar um 
+Deployment;
+
+Criar projeto
+● Primeiramente vamos criar um pequeno projeto, novamente em Flask;
+● Buildar a imagem do mesmo;
+● Enviar a imagem para o Docker Hub;
+● E testar rodar em um container;
+● Este projeto será utilizado no Kubernetes
+
+docker build -t eullerhbo/flask-kub-projeto .
+docker run -d -p 5000:5000 --name flask-kub --rm eullerhbo/flask-kub-projeto
+docker login
+docker push eullerhbo/flask-kub-projeto
+
+Criando nosso Deployment
+● Após este mini setup é hora de rodar nosso projeto no Kubernetes;
+● Para isso vamos precisar de um Deployment, que é onde rodamos os 
+containers das aplicações nos Pods;
+● O comando é: kubectl create deployment <NOME> 
+--image=<IMAGEM>
+● Desta maneira o projeto de Flask estará sendo orquestrado pelo 
+Kubernetes;
+
+kubectl create deployment flask-deployment --image=eullerhbo/flask-kub-projeto
+
+Checando Deployments
+● Podemos checar se tudo foi criado corretamente, tanto o Deployment 
+quanto a recepção do projeto pelo Pod;
+● Para verificar o Deployment vamos utilizar: kubectl get deployments
+● E para receber mais detalhes deles: kubectl describe deployments
+● Desta forma conseguimos saber se o projeto está de fato rodando e 
+também o que está rodando nele
+
+kubectl get deployments
+kubectl describe deployments
+
+Checando Pods
+● Os Pods são componentes muito importantes também, onde os 
+containers realmente são executados;
+● Para verificar os Pods utilizamos: kubectl get pods
+● E para saber mais detalhes deles: kubectl describe pods
+● Recebemos o status dos Pods que estão ligados e também 
+informações importantes sobre eles
+
+kubectl get pods
+kubectl describe pods
+
+Configurações do Kubernetes
+● Podemos também verificar como o Kubernetes está configurado;
+● O comando é: kubectl config view
+● No nosso caso: vamos receber informações importantes baseadas no 
+Minikube, que é por onde o Kubernetes está sendo executado;
+
+kubectl config view
+
+Services teoria
+● As aplicações do Kubernetes não tem conexão com o mundo externo;
+● Por isso precisamos criar um Service, que é o que possibilita expor os 
+Pods;
+● Isso acontece pois os Pods são criados para serem destruídos e 
+perderem tudo, ou seja, os dados gerados neles também são apagados;
+● Então o Service é uma entidade separada dos Pods, que expõe eles a 
+uma rede;
+
+
+Criando nosso Service
+● Para criar um serviço e expor nossos Pods devemos utilizar o comando: 
+kubectl expose deployment <NOME> --type=<TIPO> --port=<PORT>
+● Colocaremos o nome do Deployment já criado;
+● O tipo de Service, há vários para utilizarmos, porém o LoadBalancer é o 
+mais comum, onde todos os Pods são expostos;
+● E uma porta para o serviço ser consumido;
+
+
+kubectl expose deployment flask-deployment --type=LoadBalancer --port=5000
+
+Gerando Ip de acesso
+● Podemos acessar o nosso serviço com o comando: minikube service 
+<NOME>
+● Desta forma o IP aparece no nosso terminal;
+● E também uma aba no navegador é aberta com o projeto;
+● E pronto! Temos um projeto rodando pelo Kubernetes!
+
+minikube service flask-deployment
+minikube tunnel
+127.0.0.1:5000
+
+Verificando os nosso serviços
+● Podemos também obter detalhes dos Services já criados;
+● O comando para verificar todos é: kubectl get services
+● E podemos obter informações de um serviço em específico com: kubectl 
+describe services/<NOME>
+
+kubectl get services
+
+kubectl describe services/<NOME>
+
+Replicando nossa aplicação
+● Vamos aprender agora a como utilizar outros Pods, replicando assim a 
+nossa aplicação;
+● O comando é: kubectl scale deployment/<NOME> 
+--replicas=<NUMERO>
+● Podemos agora verificar no Dashboard o aumento de Pods;
+● E também com o comando de: kubectl get pod
+
+kubectl scale deployment/flask-deployment --replicas=5
+kubectl get pods
+
+Checar número de réplicas
+● Além do get pods e da Dashboard, temos mais um comando para checar 
+réplicas;
+● Que é o: kubectl get rs
+● Desta maneira temos os status das réplicas dos projetos;
+
+kubectl get rs
+
+Diminuindo a escala
+● Podemos facilmente também reduzir o número de Pods;
+● Esta técnica é chamada de scale down;
+● O comando é o mesmo, porém colocamos menos réplicas e o Kubernetes 
+faz o resto;
+● Comando: kubectl scale deployment/<NOME> --replicas=<NUMERO_MENOR>
+
+kubectl scale deployment/flask-deployment --replicas=3
+
+Atualização de imagem
+● Para atualizar a imagem vamos precisar do nome do container, isso é 
+dado na Dashboard dentro do Pod;
+● E também a nova imagem deve ser uma outra versão da atual, 
+precisamos subir uma nova tag no Hub;
+● Depois utilizamos o comando: kubectl set image deployment/<NOME> 
+<NOME_CONTAINER>=<NOVA_IMAGEM
+
+docker build -t eullerhbo/flask-kub-projeto:2 .
+docker push eullerhbo/flask-kub-projeto:2
+kubectl set image deployment/flask-deployment flask-kub-projeto=eullerhbo/flask-kub-projeto:2
+minikube tunnel
+
+Desfazer alteração
+● Para desfazer uma alteração utilizamos uma ação conhecida como 
+rollback;
+● O comando para verificar uma alteração é: kubectl rollout status 
+deployment/<NOME>
+● Com ele e com o kubectl get pods, podemos identificar problemas;
+● Para voltar a alteração utilizamos: kubectl rollout undo 
+deployment/<NOME>
+
+kubectl set image deployment/flask-deployment flask-kub-projeto=eullerhbo/flask-kub-projeto:3
+kubectl get pods
+kubectl rollout status deployment/flask-deployment
+kubectl rollout undo deployment/flask-deployment
+kubectl get pods
+kubectl rollout status deployment/flask-deployment
+
+Deletar um Service
+● Para deletar um serviço do Kubernetes vamos utilizar o comando: kubectl 
+delete service <NOME>
+● Desta maneira nossos Pods não terão mais a conexão externa;
+● Ou seja, não poderemos mais acessar eles
+
+kubectl get services
+kubectl delete service flask-deployment
+kubectl get services
+
+Deletar um Deployment
+● Para deletar um Deployment do Kubernetes vamos utilizar o comando: 
+kubectl delete deploymnet <NOME>
+● Desta maneira o container não estará mais rodando, pois paramos os 
+Pods;
+● Assim precisaremos criar um deployment novamente com a mesma ou 
+outra imagem, para acessar algum projeto
+
+kubectl get deployments
+kubectl get pods
+kubectl delete deployment 
+kubectl delete deployment flask-deployment
+kubectl get deployments
+kubectl get pods
+
+Modo declarativo
+● Até agora utilizamos o modo imperativo, que é quando iniciamos a 
+aplicação com comandos;
+● O modo declarativo é guiado por um arquivo, semelhante ao Docker 
+Compose;
+● Desta maneira tornamos nossas configurações mais simples e 
+centralizamos tudo em um comando;
+● Também escrevemos em YAML o arquivo de Kubernetes
+
+Chaves mais utilizadas
+● apiVersion: versão utilizada da ferramenta;
+● kind: tipo do arquivo (Deployment, Service);
+● metadata: descrever algum objeto, inserindo chaves como name;
+● replicas: número de réplicas de Nodes/Pods;
+● containers: definir as especificações de containers como: nome e 
+imagem;
+
+Criando nosso arquivo
+● Agora vamos transformar nosso projeto em declarativo;
+● Para isso vamos criar um arquivo para realizar o Deployment;
+● Desta maneira vamos aprender a criar os arquivos declarativos e utilizar 
+as chaves e valores;
+● Mãos à obra!
+
+Executando arquivo de Deployment
+● Vamos então executar nosso arquivo de Deployment!
+● O comando é: kubectl apply -f <ARQUIVO>
+● Desta maneira o Deployment será criado conforme configurado no arquivo 
+.yaml;
+
+kubectl apply -f flask.yaml
+
+Parando o Deployment
+● Para parar de executar este deployment baseado em arquivo, o 
+declarativo, utilizamos também o delete;
+● O comando é: kubectl delete -f <ARQUIVO>
+● Desta maneira teremos os Pods sendo excluídos e o serviço finalizado;
+
+kubectl delete -f flask.yaml
+kubectl get pods
+
+Criando o serviço
+● Agora vamos criar o serviço em declarativo;
+● Para isso vamos criar um arquivo para realizar o Service (kind);
+● O arquivo será semelhante ao de Deployment, porém tem uma 
+responsabilidade diferente;
+
+Executando o serviço
+● Vamos executar da mesma maneira: kubectl apply -f <ARQUIVO>
+● E o serviço vai estar disponível;
+● Obs: precisamos gerar o IP de acesso com minikube service <NOME
+
+kubectl apply -f flask-service.yaml
+kubectl get services
+minikube service flask-service
+minikube tunnel
+
+Parando o Serviço
+● Para parar de executar um serviço baseado em arquivo, o declarativo, 
+utilizamos também o delete;
+● O comando é: kubectl delete -f <ARQUIVO>
+● Desta maneira o serviço não estará mais disponível, então perdemos o 
+acesso ao projeto;
+
+kubectl delete -f flask-service.yaml
+kubectl get services
+kubectl get pods
+
+kubectl apply -f flask-service.yaml
+kubectl get services
+minikube service flask-service
+minikube tunnel
+
+Atualizando o projeto no declarativo
+● Primeiramente vamos criar uma nova versão da imagem;
+● E fazer o push para o Hub;
+● Depois é só alterar no arquivo de Deployment a tag;
+● E reaplicar o comando de apply, simples assim! =)
+
+docker build -t eullerhbo/flask-kub-projeto:5 .
+docker push eullerhbo/flask-kub-projeto:5
+kubectl apply -f flask-deployment.yaml
+kubectl get pods
+
+Unindo arquivos do projeto
+● Vamos precisar unir o deployment e o service em um arquivo;
+● A separação de objetos para o YAML é com: ---
+● Desta forma cada um deles será executado;
+● Uma boa prática é colocar o service antes do deployment
+
+kubectl delete -f flask-service.yaml
+kubectl delete -f flask-deployment.yaml
+
+kubectl apply -f flask-project.yaml
+kubectl get services
+kubectl get deployments
+kubectl get pods
+minikube tunnel
